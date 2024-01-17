@@ -1,10 +1,7 @@
 import { ClientConfig, ModuleName, config } from '#config';
 import { container, SapphireClient } from '@sapphire/framework';
-import { xprisma } from '#lib/util/prisma';
 import { getRootData } from '@sapphire/pieces';
 import { join } from 'path';
-import { Redis } from 'ioredis';
-import { envParseNumber, envParseString } from '@skyra/env-utilities';
 
 export class DugClient<Ready extends boolean = boolean> extends SapphireClient<Ready> {
 	public readonly loadedModules: ModuleName[] = config.enabled_modules;
@@ -14,23 +11,9 @@ export class DugClient<Ready extends boolean = boolean> extends SapphireClient<R
 		for (const module of config.enabled_modules) {
 			if (isEnabled(module)) enableModule(this, module);
 		}
-
-		// if (isEnabled('core')) enableModule(this, 'core');
-		// if (isEnabled('leveling')) enableModule(this, 'leveling');
-		// if (isEnabled('economy')) enableModule(this, 'economy');
-		// if (isEnabled('faction')) enableModule(this, 'faction');
-		// if (isEnabled('games')) enableModule(this, 'games');
 	}
 
 	public override async login(token?: string): Promise<string> {
-		container.db = xprisma;
-		container.cache = new Redis({
-			host: envParseString('REDIS_HOST'),
-			password: envParseString('REDIS_PASSWORD'),
-			port: envParseNumber('REDIS_PORT'),
-			db: 0
-		});
-
 		return super.login(token);
 	}
 

@@ -1,9 +1,6 @@
 import { DugColors } from '#constants';
 import type { GuildMessage } from '#lib/types/Discord';
-import { seconds } from '#lib/util/common';
-import { formatFailMessage, formatLevelUpMessage, formatSuccessMessage } from '#lib/util/formatter';
 import { ApplyOptions } from '@sapphire/decorators';
-import { Args, BucketScope } from '@sapphire/framework';
 import { send } from '@sapphire/plugin-editable-commands';
 import { Subcommand } from '@sapphire/plugin-subcommands';
 import { EmbedBuilder } from 'discord.js';
@@ -12,19 +9,9 @@ import { EmbedBuilder } from 'discord.js';
 	description: 'Update your level message',
 	flags: ['raw'],
 	aliases: ['lm'],
-	cooldownDelay: seconds(0),
-	cooldownLimit: 1,
-	cooldownScope: BucketScope.User,
-	subcommands: [
-		{ name: 'help', messageRun: 'msgHelp', default: true },
-		{ name: 'set', messageRun: 'msgSet' },
-		{ name: 'show', messageRun: 'msgShow' },
-		{ name: 'reset', messageRun: 'msgReset' }
-	]
+	subcommands: [{ name: 'help', messageRun: 'msgHelp', default: true }]
 })
 export class UserCommand extends Subcommand {
-	private readonly DEFAULT_MESSAGE = `GG {@user}, You just leveled up!`;
-
 	public async msgHelp(message: GuildMessage) {
 		const helpEmbed = new EmbedBuilder()
 			.setTitle('Level Up Message Help')
@@ -49,67 +36,5 @@ export class UserCommand extends Subcommand {
 			);
 
 		send(message, { embeds: [helpEmbed] });
-	}
-
-	public async msgReset(message: GuildMessage) {
-		await this.container.db.userLevel.resetLevelMessage(message.author.id);
-
-		send(message, {
-			embeds: [
-				new EmbedBuilder()
-					.setColor(DugColors.Success)
-					.setDescription(formatSuccessMessage(`Successfully reset your level up message to:\n\`\`\`${this.DEFAULT_MESSAGE}\`\`\``))
-			]
-		});
-	}
-
-	public async msgSet(message: GuildMessage, args: Args) {
-		await args.rest('url').catch(() => null);
-		const newMessage = await args.rest('string').catch(() => null);
-
-		if (!newMessage) {
-			await send(message, formatFailMessage('You have to give a new level up message. If youre confused use `levelmessage help`'));
-			return;
-		}
-
-		if (newMessage.length > 220) {
-			await send(message, formatFailMessage('Level up message should be less than 220 characters long'));
-			return;
-		}
-
-		await this.container.db.userLevel.setLevelMessage(message.author.id, newMessage);
-
-		send(message, {
-			embeds: [
-				new EmbedBuilder()
-					.setColor(DugColors.Success)
-					.setDescription(formatSuccessMessage(`Successfully reset your level up message to:\n\`\`\`${newMessage}\`\`\``))
-			]
-		});
-	}
-
-	public async msgShow(message: GuildMessage, args: Args) {
-		const levelUpMessage = (await this.container.db.userLevel.getLevelMessage(message.author.id)) ?? this.DEFAULT_MESSAGE;
-
-		const showRaw = args.getFlags('raw');
-		if (showRaw) {
-			send(message, {
-				content: `### Level up message preview\n\`\`\`${levelUpMessage}\`\`\``,
-				allowedMentions: {
-					parse: [],
-					users: [message.author.id]
-				}
-			});
-		}
-
-		const currentLevel = await this.container.db.userLevel.getCurrentLevel(message.author.id);
-		const formattedMessage = formatLevelUpMessage(levelUpMessage, message, { oldlevel: currentLevel, newlevel: currentLevel + 1 });
-		send(message, {
-			content: `### Level up message preview\n${formattedMessage}`,
-			allowedMentions: {
-				parse: [],
-				users: [message.author.id]
-			}
-		});
 	}
 }
