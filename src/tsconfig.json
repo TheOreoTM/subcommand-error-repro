@@ -1,0 +1,21 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "../dist",
+		"rootDir": ".",
+		"baseUrl": "./",
+		"allowJs": true,
+		"paths": {
+			"#config": ["lib/util/config.ts"],
+			"#constants": ["lib/util/constants.ts"],
+			"#lib/*": ["lib/*"],
+			"#utils/*": ["lib/util/*"]
+		},
+		"skipLibCheck": true,
+		"composite": true,
+		"moduleResolution": "node",
+		"esModuleInterop": true
+	},
+	"include": [".", "./**/*.json"],
+	"exclude": ["./tsconfig.json"]
+}
